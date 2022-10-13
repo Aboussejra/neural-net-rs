@@ -14,21 +14,15 @@ pub fn linear_forward(
     weights_matrix: Array<f32, Ix2>,
     bias: Array<f32, Ix2>,
 ) -> (
-    ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-    (
-        ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-        ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-        ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-    ),
+    Array<f32, Ix2>,
+    (Array<f32, Ix2>, Array<f32, Ix2>, Array<f32, Ix2>),
 ) {
     let out = weights_matrix.dot(&activations) + bias.clone();
     let cache = (activations, weights_matrix, bias);
     (out, cache)
 }
 
-pub fn sigmoid(
-    input: Array<f32, Ix2>,
-) -> ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>> {
+pub fn sigmoid(input: Array<f32, Ix2>) -> Array<f32, Ix2> {
     input.mapv(|x| 1. / (1. + (-x).exp()))
 }
 /*
@@ -53,6 +47,34 @@ pub fn compute_cost(
     cost
 }
 
+/*
+    Implement the linear portion of backward propagation for a single layer (layer i)
+
+    Arguments:
+    grad_output -- Gradient of the cost with respect to the linear output (of layer i)
+    cache_forward_prop -- tuple of values (A_previous_layer, W, b) coming from the forward propagation in the current layer
+
+    Returns:
+    grad_prev_layer -- Gradient of the cost with respect to the activation (of the previous layer i-1)
+    grad_cost_weights -- Gradient of the cost with respect to weights (current layer l)
+    grad_cost_bias -- Gradient of the cost with respect to vias (current layer l)
+*/
+pub fn linear_backward(
+    grad_output: Array<f32, Ix2>,
+    cache_forward_prop: (Array<f32, Ix2>, Array<f32, Ix2>, Array<f32, Ix2>),
+) -> (Array<f32, Ix2>, Array<f32, Ix2>, Array<f32, Ix2>) {
+    let (activations_previous_layer, weights_matrix, bias) = cache_forward_prop;
+    let m = activations_previous_layer.shape()[0];
+    let grad_cost_weights =
+        (grad_output.dot(&activations_previous_layer.t())).mapv(|x| x / (m as f32));
+    let bias_weights = activations_previous_layer
+        .sum_axis(ndarray::Axis(1))
+        .mapv(|x| x / (m as f32))
+        .into_shape((m, 1))
+        .expect("Should work, equivalent to numpy keep_dims");
+    let grad_prev_layer = (weights_matrix.t()).dot(&grad_output);
+    return (grad_prev_layer, grad_cost_weights, bias_weights);
+}
 #[allow(non_snake_case)]
 mod tests {
     use ndarray::{array, Array, Ix2};

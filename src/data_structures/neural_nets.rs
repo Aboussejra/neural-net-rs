@@ -32,12 +32,8 @@ impl DeepNeuralNet {
         &self,
         input_data: Array<f32, Ix2>,
     ) -> (
-        ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-        Vec<(
-            ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-            ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-            ndarray::ArrayBase<ndarray::OwnedRepr<f32>, ndarray::Dim<[usize; 2]>>,
-        )>,
+        Array<f32, Ix2>,
+        Vec<(Array<f32, Ix2>, Array<f32, Ix2>, Array<f32, Ix2>)>,
     ) {
         let depth = self.weights.len();
         let mut caches = vec![];
